@@ -1,0 +1,64 @@
+name: Builds
+on:
+  push:
+    branches: [ "senpai" ]
+jobs:
+  debian-10:
+    runs-on: [debian-10]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - run: php Pluto/scripts/compile.php clang
+      - run: php Pluto/scripts/link_static.php
+      - run: php vendor/Soup/build_lib.php
+      - run: clang main.cpp -ffunction-sections -fdata-sections -std=c++17 -Ivendor/Soup -IPluto/src vendor/Soup/libsoup.a Pluto/src/libplutostatic.a -lstdc++ -lstdc++fs -lm -ldl -pthreads -o tie-runtime
+      - uses: actions/upload-artifact@v4
+        with:
+          name: "Linux (X64)"
+          path: tie-runtime
+  macos:
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - run: php Pluto/scripts/compile.php clang
+      - run: php Pluto/scripts/link_static.php
+      - run: php vendor/Soup/build_lib.php
+      - run: clang main.cpp -ffunction-sections -fdata-sections -std=c++17 -Ivendor/Soup -IPluto/src vendor/Soup/libsoup.a Pluto/src/libplutostatic.a -lc++ -o tie-runtime
+      - uses: actions/upload-artifact@v4
+        with:
+          name: "MacOS (X64)"
+          path: tie-runtime
+  macos-arm64:
+    runs-on: macos-14
+    steps:
+      - uses: shivammathur/setup-php@v2
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - run: php Pluto/scripts/compile.php clang
+      - run: php Pluto/scripts/link_static.php
+      - run: php vendor/Soup/build_lib.php
+      - run: clang main.cpp -ffunction-sections -fdata-sections -std=c++17 -Ivendor/Soup -IPluto/src vendor/Soup/libsoup.a Pluto/src/libplutostatic.a -lc++ -o tie-runtime
+      - uses: actions/upload-artifact@v4
+        with:
+          name: "MacOS (ARM64)"
+          path: tie-runtime
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Ensure LLVM is up-to-date
+        run: choco upgrade llvm
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - run: php Pluto/scripts/compile.php clang
+      - run: php Pluto/scripts/link_static.php
+      - run: php vendor/Soup/build_lib.php
+      - run: clang main.cpp -ffunction-sections -fdata-sections -std=c++17 -Ivendor/Soup -IPluto/src vendor/Soup/soup.lib Pluto/src/libplutostatic.a -o tie-runtime.exe
+      - uses: actions/upload-artifact@v4
+        with:
+          name: "Windows (X64)"
+          path: tie-runtime.exe
